@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <bucket_name> <file_path>"
+    exit 1
+fi
+
+bucket_name=$1
+file_path=$2
+file_name=$(basename "$file_path")
+previous_checksum=""
+
+if [ "$file_name" != "myfile.txt" ]; then
+    echo "Error: Only the file 'myfile.txt' can be uploaded."
+    exit 1
+fi
+
+while true; do
+    current_checksum=$(md5sum "$file_path" | awk '{print $1}')
+    if [ "$previous_checksum" != "$current_checksum" ]; then
+        aws s3 cp "$file_path" "s3://$bucket_name/$file_name"
+        previous_checksum=$current_checksum
+        echo "$file_path has been uploaded to S3 with name $file_name and checksum $current_checksum."
+    else
+        echo "$file_name is not modified."
+    fi
+    sleep 15
+done
+
